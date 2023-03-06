@@ -73,7 +73,7 @@ ohai() {
 }
 
 warn() {
-  printf "${tty_red}Warning${tty_reset}: %s\n" "$(chomp "$1")"
+  printf "${tty_red}Warning${tty_reset}: %s\n" "$(chomp "$1")" >&2
 }
 
 # Check if script is run non-interactively (e.g. CI)
@@ -405,7 +405,10 @@ find_tool() {
   local executable
   while read -r executable
   do
-    if "test_$1" "${executable}"
+    if [[ "${executable}" != /* ]]
+    then
+      warn "Ignoring ${executable} - relative paths don't work"
+    elif "test_$1" "${executable}"
     then
       echo "${executable}"
       break
@@ -447,7 +450,7 @@ fi
 cd "/usr" || exit 1
 
 ####################################################################### script
-USABLE_GIT="$(command -v git)"
+USABLE_GIT="$(find_tool git)"
 if [[ -z "${USABLE_GIT}" ]]
 then
   abort "$(
