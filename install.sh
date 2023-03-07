@@ -384,8 +384,8 @@ test_git() {
 
   local git_version_output
   git_version_output="$("$1" --version 2>/dev/null)"
-  echo "version got: ${git_version_output} version wanted: ${REQUIRED_GIT_VERSION}"
-  echo "version got: $(major_minor "${git_version_output##* }") version wanted: $(major_minor "${REQUIRED_GIT_VERSION}")"
+  warn "version got: ${git_version_output} version wanted: ${REQUIRED_GIT_VERSION}"
+  warn "[X] version got: $(major_minor "${git_version_output##* }") version wanted: $(major_minor "${REQUIRED_GIT_VERSION}")"
   version_ge "$(major_minor "${git_version_output##* }")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
 }
 
