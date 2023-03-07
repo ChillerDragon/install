@@ -315,6 +315,7 @@ should_install_command_line_tools() {
     return 1
   fi
 
+  macos_version="$(major_minor "$(/usr/bin/sw_vers -productVersion)")"
   if version_gt "${macos_version}" "10.13"
   then
     ! [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
@@ -632,7 +633,6 @@ fi
 
 if [[ -n "${HOMEBREW_ON_MACOS-}" ]]
 then
-  macos_version="$(major_minor "$(/usr/bin/sw_vers -productVersion)")"
   if version_lt "${macos_version}" "10.7"
   then
     abort "$(
