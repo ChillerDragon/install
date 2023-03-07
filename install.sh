@@ -384,6 +384,7 @@ test_git() {
 
   local git_version_output
   git_version_output="$("$1" --version 2>/dev/null)"
+  warn "git --versioN: $(git --version)"
   warn "version got: ${git_version_output} version wanted: ${REQUIRED_GIT_VERSION}"
   warn "[X] version got: $(major_minor "${git_version_output##* }") version wanted: $(major_minor "${REQUIRED_GIT_VERSION}")"
   version_ge "$(major_minor "${git_version_output##* }")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
@@ -449,6 +450,52 @@ fi
 if [[ -x /usr/bin/sudo ]] && ! /usr/bin/sudo -n -v 2>/dev/null
 then
   trap '/usr/bin/sudo -k' EXIT
+fi
+
+if should_install_command_line_tools && version_ge "${macos_version}" "10.13"
+then
+  ohai "Searching online for the Command Line Tools"
+  # This temporary file prompts the 'softwareupdate' utility to list the Command Line Tools
+  clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+  execute_sudo "${TOUCH[@]}" "${clt_placeholder}"
+
+  clt_label_command="/usr/sbin/softwareupdate -l |
+                      grep -B 1 -E 'Command Line Tools' |
+                      awk -F'*' '/^ *\\*/ {print \$2}' |
+                      sed -e 's/^ *Label: //' -e 's/^ *//' |
+                      sort -V |
+                      tail -n1"
+  clt_label="$(chomp "$(/bin/bash -c "${clt_label_command}")")"
+
+  if [[ -n "${clt_label}" ]]
+  then
+    ohai "Installing ${clt_label}"
+    execute_sudo "/usr/sbin/softwareupdate" "-i" "${clt_label}"
+    execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+  fi
+  execute_sudo "/bin/rm" "-f" "${clt_placeholder}"
+fi
+
+# Headless install may have failed, so fallback to original 'xcode-select' method
+if should_install_command_line_tools && test -t 0
+then
+  ohai "Installing the Command Line Tools (expect a GUI popup):"
+  execute "/usr/bin/xcode-select" "--install"
+  echo "Press any key when the installation has completed."
+  getc
+  execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
+fi
+
+if [[ -n "${HOMEBREW_ON_MACOS-}" ]] && ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "${output}" == *"license"* ]]
+then
+  abort "$(
+    cat <<EOABORT
+You have not agreed to the Xcode license.
+Before running the installer again please agree to the license by opening
+Xcode.app or running:
+    sudo xcodebuild -license
+EOABORT
+  )"
 fi
 
 # Things can fail later if `pwd` doesn't exist.
@@ -849,52 +896,6 @@ fi
 if [[ -d "${HOMEBREW_CACHE}" ]]
 then
   execute "${TOUCH[@]}" "${HOMEBREW_CACHE}/.cleaned"
-fi
-
-if should_install_command_line_tools && version_ge "${macos_version}" "10.13"
-then
-  ohai "Searching online for the Command Line Tools"
-  # This temporary file prompts the 'softwareupdate' utility to list the Command Line Tools
-  clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
-  execute_sudo "${TOUCH[@]}" "${clt_placeholder}"
-
-  clt_label_command="/usr/sbin/softwareupdate -l |
-                      grep -B 1 -E 'Command Line Tools' |
-                      awk -F'*' '/^ *\\*/ {print \$2}' |
-                      sed -e 's/^ *Label: //' -e 's/^ *//' |
-                      sort -V |
-                      tail -n1"
-  clt_label="$(chomp "$(/bin/bash -c "${clt_label_command}")")"
-
-  if [[ -n "${clt_label}" ]]
-  then
-    ohai "Installing ${clt_label}"
-    execute_sudo "/usr/sbin/softwareupdate" "-i" "${clt_label}"
-    execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
-  fi
-  execute_sudo "/bin/rm" "-f" "${clt_placeholder}"
-fi
-
-# Headless install may have failed, so fallback to original 'xcode-select' method
-if should_install_command_line_tools && test -t 0
-then
-  ohai "Installing the Command Line Tools (expect a GUI popup):"
-  execute "/usr/bin/xcode-select" "--install"
-  echo "Press any key when the installation has completed."
-  getc
-  execute_sudo "/usr/bin/xcode-select" "--switch" "/Library/Developer/CommandLineTools"
-fi
-
-if [[ -n "${HOMEBREW_ON_MACOS-}" ]] && ! output="$(/usr/bin/xcrun clang 2>&1)" && [[ "${output}" == *"license"* ]]
-then
-  abort "$(
-    cat <<EOABORT
-You have not agreed to the Xcode license.
-Before running the installer again please agree to the license by opening
-Xcode.app or running:
-    sudo xcodebuild -license
-EOABORT
-  )"
 fi
 
 ohai "Downloading and installing Homebrew..."
