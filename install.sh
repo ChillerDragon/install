@@ -405,13 +405,17 @@ find_tool() {
   local executable
   while read -r executable
   do
+    warn "Testing exec '${executable}'"
     if [[ "${executable}" != /* ]]
     then
       warn "Ignoring ${executable} - relative paths don't work"
     elif "test_$1" "${executable}"
     then
+      warn "Found ${executable}"
       echo "${executable}"
       break
+    else
+      warn "Test failed for '${executable}'"
     fi
   done < <(which -a "$1")
 }
@@ -455,6 +459,7 @@ echo "PATH: ${PATH}"
 echo "command -v: $(command -v git)"
 echo "which -a: $(type -P -a git)"
 echo "find_tool: $(find_tool git)"
+echo "USABLE_GIT: '${USABLE_GIT}'"
 if [[ -z "${USABLE_GIT}" ]]
 then
   abort "$(
