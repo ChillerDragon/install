@@ -451,9 +451,9 @@ cd "/usr" || exit 1
 
 ####################################################################### script
 USABLE_GIT="$(find_tool git)"
-echo "PATH: $PATH"
+echo "PATH: ${PATH}"
 echo "command -v: $(command -v git)"
-echo "which -a: $(which -a git)"
+echo "which -a: $(type -P -a git)"
 if [[ -z "${USABLE_GIT}" ]]
 then
   abort "$(
