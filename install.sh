@@ -454,6 +454,7 @@ USABLE_GIT="$(find_tool git)"
 echo "PATH: ${PATH}"
 echo "command -v: $(command -v git)"
 echo "which -a: $(type -P -a git)"
+echo "find_tool: $(find_tool git)"
 if [[ -z "${USABLE_GIT}" ]]
 then
   abort "$(
