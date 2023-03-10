@@ -26,13 +26,6 @@ tty_red="$(tty_mkbold 31)"
 # tty_bold="$(tty_mkbold 39)"
 tty_reset="$(tty_escape 0)"
 
-major_minor() {
-  echo "${1%%.*}.$(
-    x="${1#*.}"
-    echo "${x%%.*}"
-  )"
-}
-
 version_gt() {
   [[ "${1%.*}" -gt "${2%.*}" ]] || [[ "${1%.*}" -eq "${2%.*}" && "${1#*.}" -gt "${2#*.}" ]]
 }
@@ -42,6 +35,19 @@ version_ge() {
 version_lt() {
   [[ "${1%.*}" -lt "${2%.*}" ]] || [[ "${1%.*}" -eq "${2%.*}" && "${1#*.}" -lt "${2#*.}" ]]
 }
+major_minor() {
+  echo "${1%%.*}.$(
+    x="${1#*.}"
+    echo "${x%%.*}"
+  )"
+}
+
+git_version_output="git version 2.37.1 (Apple Git-137.1)"
+git_version_output="$(echo $git_version_output | awk '{ print $1 " " $2 " " $3 }')"
+major_minor "${git_version_output##* }"
+version_ge "$(major_minor "${git_version_output##* }")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
+exit 0
+
 
 test_git() {
   if [[ ! -x "$1" ]]
@@ -51,6 +57,8 @@ test_git() {
 
   local git_version_output
   git_version_output="$("$1" --version 2>/dev/null)"
+  git_version_output="git version 2.37.1 (Apple Git-137.1)"
+  # git_version_output="$(echo $git_version_output | awk '{ print $1 " " $2 " " $3 }')"
   warn "   version: $("$1" --version)"
   warn "got stdout: ${git_version_output}"
   warn "    wanted: ${REQUIRED_GIT_VERSION}"
