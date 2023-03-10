@@ -83,7 +83,7 @@ jobs:
           echo -e "#!/bin/bash\nexec /home/linuxbrew/.linuxbrew/bin/brew \"\$@\"" | tee /usr/local/bin/brew
           chmod 755 /usr/local/bin/brew
 
-      - run: /bin/bash -c "$(cat vers.sh)"
+      - run: /bin/bash -c "$(cat vers.sh)" || true
 
       - run: /bin/bash -c "$(cat install.sh)"
 

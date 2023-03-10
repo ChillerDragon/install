@@ -510,6 +510,28 @@ echo "command -v: $(command -v git)"
 echo "which -a: $(type -P -a git)"
 echo "find_tool: $(find_tool git)"
 echo "USABLE_GIT: '${USABLE_GIT}'"
+echo '=================================================================='
+
+stest_git() {
+  if [[ ! -x "$1" ]]
+  then
+    return 1
+  fi
+
+  local git_version_output
+  git_version_output="$("$1" --version 2>/dev/null)"
+  warn "   version: $("$1" --version)"
+  warn "got stdout: ${git_version_output}"
+  warn "    wanted: ${REQUIRED_GIT_VERSION}"
+  warn "[##*]    got: $(major_minor "${git_version_output##* }")"
+  warn "[##*] wanted: $(major_minor "${REQUIRED_GIT_VERSION}")"
+  version_ge "$(major_minor "${git_version_output##* }")" "$(major_minor "${REQUIRED_GIT_VERSION}")"
+}
+
+stest_git "$(command -v git)"
+
+echo '=================================================================='
+
 if [[ -z "${USABLE_GIT}" ]]
 then
   abort "$(
